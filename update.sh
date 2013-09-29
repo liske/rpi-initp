@@ -84,6 +84,9 @@ cd /target
 
 pivot_root . pinit
 
-exec /sbin/init
+exec /lib/init/pinit-stub
+
+echo 'FATAL: failed to run /lib/init/pinit-stub'
+exec /bin/sh
 " > "$mpinitp/sbin/pinit"
 chmod +x "$mpinitp/sbin/pinit"
