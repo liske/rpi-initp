@@ -24,6 +24,14 @@
 #   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 #
 
+
+# mount kernel filesystems & tmpfs
+mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
+mount -t proc -o nodev,noexec,nosuid proc /proc
+mount -t tmpfs tmpfs /tmp
+
+
+# get rootfs parameters from cmdline
 pivot="LABEL=rootfs"
 
 for x in $(cat /proc/cmdline); do
@@ -40,10 +48,6 @@ for x in $(cat /proc/cmdline); do
     esac
 done
 
-mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
-mount -t proc -o nodev,noexec,nosuid proc /proc
-mount -t tmpfs tmpfs /tmp
-
 unset LABEL UUID TYPE
 eval $pivot
 
@@ -51,6 +55,8 @@ pdev="$pivot"
 puuid="$UUID"
 plabel="$LABEL"
 
+
+# call blkid, try to find the rootfs
 fn=$(mktemp)
 for i in $(seq 1 12); do
     echo "Looking for rootfs $pdev (#$i)"
@@ -96,6 +102,8 @@ for i in $(seq 1 12); do
     sleep 5
 done
 
+
+# rootfs found - swichting over
 if [ "$stub" -eq 1 ]; then
     exec /lib/init/pinit-stub
     echo 'FATAL: failed to run /lib/init/pinit-stub'
@@ -105,6 +113,8 @@ if [ "$stub" -eq 1 ]; then
     exit 253
 fi
 
+
+# something is broken
 rm -f "$fn"
 
 echo
