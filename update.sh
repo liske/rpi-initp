@@ -60,33 +60,8 @@ if [ ! -L "$mpinitp/sbin/init" ]; then
     ln -s "/bin/busybox" "$mpinitp/sbin/init"
 fi
 
+echo "Checking rpi-initp files:"
 
-echo "Create /sbin/pinit..."
-echo "#/bin/sh
-
-fstype=ext4
-
-mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
-mount -t proc -o nodev,noexec,nosuid proc /proc
-
-modprobe \$fstype
-
-rm -f /dev/root
-ln -s sda2 /dev/root
-mount /dev/sda2 /target -t \$fstype -o ro
-
-for mp in dev sys proc; do
-    tp=\"/target/\$mp\"
-    [ -d \"\$tp\" ] && mount \"/\$mp\" \"\$tp\" -o bind
+for fn in "$mpinitp/sbin/pinit" "$mpinitp/sbin/sinit" "$mprootp/lib/init/pinit-stub"; do
+    echo -n " $fn: "; [ -x "$fn" ] && echo "OK" || echo "FAILED"
 done
-
-cd /target
-
-pivot_root . pinit
-
-exec /lib/init/pinit-stub
-
-echo 'FATAL: failed to run /lib/init/pinit-stub'
-exec /bin/sh
-" > "$mpinitp/sbin/pinit"
-chmod +x "$mpinitp/sbin/pinit"
