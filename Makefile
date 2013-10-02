@@ -22,5 +22,6 @@ install: sinit blkid
 	cp pinit-stub "${prefix}/lib/init/"
 	cp update.sh "${prefix}/initp/"
 	mkdir -p "${prefix}/initp/sbin"
+	cp pinit "${prefix}/initp/sbin"
 	cp sinit "${prefix}/initp/sbin/"
 	cp blkid "${prefix}/initp/bin"
