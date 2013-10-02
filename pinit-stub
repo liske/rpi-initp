@@ -26,7 +26,7 @@
 
 INITP='/initp'
 
-for mp in dev proc sys; do
+for mp in dev proc sys tmp; do
         umount "$INITP/$mp"
 done
 
