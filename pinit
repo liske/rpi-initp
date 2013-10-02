@@ -85,11 +85,11 @@ for i in $(seq 1 12); do
 
 	    cd /target
 
-	    pivot_root . pinit
+	    pivot_root . initp
 
 	    exec /lib/init/pinit-stub
-
 	    echo 'FATAL: failed to run /lib/init/pinit-stub'
+
 	    exec /bin/sh
 
 	    exit 253
