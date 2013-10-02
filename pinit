@@ -1,0 +1,111 @@
+#!/bin/sh
+
+# rpi-initp - init partition (not only for Raspberry Pi)
+#
+# Authors:
+#   Thomas Liske <thomas@fiasko-nw.net>
+#
+# Copyright Holder:
+#   2013 (C) Thomas Liske [http://fiasko-nw.net/~thomas/]
+#
+# License:
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this package; if not, write to the Free Software
+#   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+#
+
+pivot="LABEL=rootfs"
+
+for x in $(cat /proc/cmdline); do
+    case "$x" in
+	pivot=*)
+	    pivot=$(x#pivot=)
+	    ;;
+	pivotflags=*)
+	    PFLAGS="-o ${x#pivotflags=}"
+	    ;;
+	debug)
+	    set -x
+	    ;;
+    esac
+done
+
+mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
+mount -t proc -o nodev,noexec,nosuid proc /proc
+mount -t tmpfs tmpfs /tmp
+
+unset LABEL UUID TYPE
+eval $pivot
+
+pdev="$pivot"
+puuid="$UUID"
+plabel="$LABEL"
+
+fn=$(mktemp)
+for i in $(seq 1 12); do
+    echo "Looking for rootfs $pdev (#$i)"
+    blkid > "$fn"
+
+    while read dev id; do
+	dev="${dev%:}"
+
+	unset LABEL UUID TYPE
+	eval $id
+
+	if [ "$dev" = "$pdev" ] ||
+	    [ -n "$puuid" -a -n "$UUID" -a "$puuid" = "$UUID" ] ||
+	    [ -n "$plabel" -a -n "$LABEL" -a "$plabel" = "$LABEL" ]; then
+
+	    echo "Device found, trying to switchover..."
+
+	    rm -f "$fn"
+
+	    if [ -n "$TYPE" ]; then
+		modprobe $TYPE
+	    fi
+
+	    rm -f /dev/root
+	    ln -s $(basename $dev) /dev/root
+	    mount "$dev" /target -t "$TYPE" -o ro
+
+	    for mp in dev sys proc; do
+		tp="/target/$mp"
+		[ -d "$tp" ] && mount "/$mp" "$tp" -o bind
+	    done
+
+	    cd /target
+
+	    pivot_root . pinit
+
+	    exec /lib/init/pinit-stub
+
+	    echo 'FATAL: failed to run /lib/init/pinit-stub'
+	    exec /bin/sh
+
+	    exit 253
+	fi
+    done < "$fn"
+
+    echo "rootfs is not here, yet..."
+    sleep 5
+done
+
+rm -f "$fn"
+
+echo
+echo "FATAL: did not find the rootfs - starting shell..."
+echo
+
+exec /bin/sh
+
+exit 254
