@@ -29,7 +29,7 @@ pivot="LABEL=rootfs"
 for x in $(cat /proc/cmdline); do
     case "$x" in
 	pivot=*)
-	    pivot=$(x#pivot=)
+	    pivot=${x#pivot=}
 	    ;;
 	pivotflags=*)
 	    PFLAGS="-o ${x#pivotflags=}"
