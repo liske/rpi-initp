@@ -87,18 +87,23 @@ for i in $(seq 1 12); do
 
 	    pivot_root . initp
 
-	    exec /lib/init/pinit-stub
-	    echo 'FATAL: failed to run /lib/init/pinit-stub'
-
-	    exec /bin/sh
-
-	    exit 253
+	    stub=1
+	    break 2
 	fi
     done < "$fn"
 
     echo "rootfs is not here, yet..."
     sleep 5
 done
+
+if [ "$stub" -eq 1 ]; then
+    exec /lib/init/pinit-stub
+    echo 'FATAL: failed to run /lib/init/pinit-stub'
+
+    exec /bin/sh
+
+    exit 253
+fi
 
 rm -f "$fn"
 
