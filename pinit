@@ -58,7 +58,7 @@ plabel="$LABEL"
 
 # call blkid, try to find the rootfs
 fn=$(mktemp)
-for i in $(seq 1 12); do
+for i in $(seq 1 18); do
     echo "Looking for rootfs $pdev (#$i)"
     blkid > "$fn"
 
